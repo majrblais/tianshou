@@ -65,10 +65,13 @@ class MultiAgentPolicyManager(BasePolicy):
             policy = self.policies[agent]
             
             agent_index = np.nonzero(batch.obs.agent_id == agent)[0]
+            #check if batch for index is empty 
             if len(agent_index) == 0:
                 results[agent] = Batch()
                 continue
-            agent_next_index=agents_next
+                
+            #create obs_next by using CURRENT AGENT (modified from next agent)
+            agent_next_index=agent_index
             agent_next_index[0] = agent_next_index[-1]
             agent_next_index = np.roll(agent_next_index, -1)
             
