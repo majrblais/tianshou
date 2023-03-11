@@ -77,6 +77,9 @@ class MultiAgentPolicyManager(BasePolicy):
             
             tmp_batch, tmp_indice = batch[agent_index], indice[agent_index]
             tmp_batch_next = batch[agent_next_index]
+            #append obs_next
+            tmp_batch.obs_next = tmp_batch_next.obs
+            
             if has_rew:
                 tmp_batch.rew = tmp_batch.rew[:, self.agent_idx[agent]]
                 buffer._meta.rew = save_rew[:, self.agent_idx[agent]]
