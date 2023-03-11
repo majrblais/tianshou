@@ -84,7 +84,7 @@ class MultiAgentPolicyManager(BasePolicy):
                 if hasattr(tmp_batch.obs, 'obs'):
                     tmp_batch.obs = tmp_batch.obs.obs
                 if hasattr(tmp_batch.obs_next, 'obs'):
-                    tmp_batch.obs_next = tmp_batch_next.obs_next.obs
+                    tmp_batch.obs_next = tmp_batch_next.obs
             results[agent] = policy.process_fn(tmp_batch, buffer, tmp_indice)
         if has_rew:  # restore from save_rew
             buffer._meta.rew = save_rew
