@@ -71,7 +71,7 @@ class MultiAgentPolicyManager(BasePolicy):
                 continue
                 
             #create obs_next by using CURRENT AGENT (modified from next agent)
-            agent_next_index=agent_index
+            agent_next_index=agent_index.copy()
             agent_next_index[0] = agent_next_index[-1]
             agent_next_index = np.roll(agent_next_index, -1)
             
