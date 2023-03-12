@@ -42,14 +42,15 @@ class MultiAgentPolicyManager(BasePolicy):
         policy.set_agent_id(agent_id)
         self.policies[agent_id] = policy
 
-    def process_fn(
-        self, batch: Batch, buffer: ReplayBuffer, indice: np.ndarray
-    ) -> Batch:
+    def process_fn(self, batch: Batch, buffer: ReplayBuffer, indice: np.ndarray) -> Batch:
         """Dispatch batch data from obs.agent_id to every policy's process_fn.
         Save original multi-dimensional rew in "save_rew", set rew to the
         reward of each agent during their "process_fn", and restore the
         original reward afterwards.
         """
+        #print("batch size of 8 random element")
+        #print(batch)
+        #print('===================================')
         results = {}
         # reward can be empty Batch (after initial reset) or nparray.
         has_rew = isinstance(buffer.rew, np.ndarray)
@@ -58,41 +59,63 @@ class MultiAgentPolicyManager(BasePolicy):
             # change buffer.rew, otherwise buffer.rew = Batch() has no effect.
             save_rew, buffer._meta.rew = buffer.rew, Batch()
         
+
         agents = list(self.policies)
-        agents_next = agents[-1:] + agents[:-1]       # Right shifted array
+        agents_next=np.roll(agents,1)
+        #print(batch)
         
-        for agent, agent_next in zip(agents, agents_next):
+        for agent in (agents):
             policy = self.policies[agent]
-            
             agent_index = np.nonzero(batch.obs.agent_id == agent)[0]
-            #check if batch for index is empty 
+
             if len(agent_index) == 0:
                 results[agent] = Batch()
                 continue
                 
-            #create obs_next by using CURRENT AGENT (modified from next agent)
+            #copy agent_index, roll them once to the left to find obs_next
             agent_next_index=agent_index.copy()
             agent_next_index[0] = agent_next_index[-1]
             agent_next_index = np.roll(agent_next_index, -1)
-            
+
             tmp_batch, tmp_indice = batch[agent_index], indice[agent_index]
             tmp_batch_next = batch[agent_next_index]
-            #append obs_next
-            tmp_batch.obs_next = tmp_batch_next.obs
+            '''
+            
+            print('tmp_batch of specific agent')
+            print(tmp_batch)
+            print('===================================')
+            print('tmp_batch_next of next agent')
+            print(tmp_batch_next)
+            print('===================================')
+            '''
+
             
             if has_rew:
                 tmp_batch.rew = tmp_batch.rew[:, self.agent_idx[agent]]
                 buffer._meta.rew = save_rew[:, self.agent_idx[agent]]
-            if not hasattr(tmp_batch.obs, "mask"):
-                if hasattr(tmp_batch.obs, 'obs'):
-                    tmp_batch.obs = tmp_batch.obs.obs
-                if hasattr(tmp_batch.obs_next, 'obs'):
-                    tmp_batch.obs_next = tmp_batch_next.obs
+            
+            #if not hasattr(tmp_batch.obs, "mask"):
+                #print('et')
+                #exit()
+                
+            #Removed lines from mask check attribute to append obs_next properly
+            if hasattr(tmp_batch.obs, 'obs'):
+                tmp_batch.obs = tmp_batch.obs.obs
+            if hasattr(tmp_batch.obs_next, 'obs'):
+                tmp_batch.obs_next = tmp_batch_next.obs
+            
+            
             results[agent] = policy.process_fn(tmp_batch, buffer, tmp_indice)
+            
+            #print('tmp_batch of agent with next_obs')
+            #print(tmp_batch)
+            #print('===================================')
+        #exit()
         if has_rew:  # restore from save_rew
             buffer._meta.rew = save_rew
-        return Batch(results)
 
+        return Batch(results)    
+              
     def exploration_noise(self, act: Union[np.ndarray, Batch],
                           batch: Batch) -> Union[np.ndarray, Batch]:
         """Add exploration noise from sub-policy onto act."""

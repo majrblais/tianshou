@@ -281,7 +281,10 @@ class ReplayBuffer:
         """
         if self.stack_num == 1 or not self._sample_avail:  # most often case
             if batch_size > 0:
-                return np.random.choice(self._size, batch_size)
+                #modified buffer to return continous array of indices 
+                val=np.random.choice(self._size-16)
+                return np.arange(val,val+16)
+                #return np.random.choice(self._size, batch_size)
             elif batch_size == 0:  # construct current available indices
                 return np.concatenate(
                     [np.arange(self._index, self._size),
@@ -300,7 +303,9 @@ class ReplayBuffer:
                 prev_indices = self.prev(prev_indices)
             all_indices = all_indices[prev_indices != self.prev(prev_indices)]
             if batch_size > 0:
-                return np.random.choice(all_indices, batch_size)
+                #modified buffer to return continous array of indices 
+                val=np.random.choice(self._size-16)
+                return np.arange(val,val+16)
             else:
                 return all_indices
 
